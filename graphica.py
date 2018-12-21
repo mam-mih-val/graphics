@@ -93,7 +93,6 @@ def draw_poly(X,Y, Fill=0) :
                         canvas.create_rectangle(i,j,i,j,fill="black")
     for i in range( len(line_list) ):
         draw_line(line_list[i][0],line_list[i][1])
-                
 
 def intersection(X0,Y0,X1,Y1) :
     A = []; B =[]; C = []
@@ -196,18 +195,43 @@ def non_zero(x0,y0,LL) :
     else :
         return False
 
+def factorial(n) :
+    if n == 0 :
+        return 1
+    else :
+        return factorial(n-1)*n
+
+def C_nk(n) :
+    b = []
+    for k in range(n+1):
+        b.append(factorial(n)/factorial(k)/factorial(n-k))
+    return b
+
+def bezier(X,Y) :
+    #Bezier curves
+    #   B = Sum n! / k! /(n-k)! * (1-t)^(n-k) * Pk
+    N = len(X); n = N-1
+    b = C_nk(n)
+    print( b )
+    B = []
+    t = 0; dt = 0.05
+    while t <= 1+dt :
+        x = 0; y = 0
+        dbdx = 0
+        for k in range(N) :
+            x += ( b[k]*(1-t)**(n-k) * t**k )*X[k]
+            y += ( b[k]*(1-t)**(n-k) * t**k )*Y[k]
+        B.append([int(x),int(y)])
+        t+=dt
+    #print(B)
+    line_list = []
+    for i in range(len(B)-1) :
+        line_list.append( [ [ B[i][0],B[i+1][0] ], [ B[i][1],B[i+1][1] ] ] )
+    print(line_list)
+    for line in line_list :
+        draw_line( line[0],line[1] )
+        
 while True :
     canvas.delete("all")
-    """
-    draw_line([100,400],[100,50])
-    draw_line([250,500],[250,150])
-    draw_line([250,150],[250,0])
-    draw_line([250,0],[250,150])
-    
-    draw_line([250,300],[250,500])
-    draw_line([250,500],[250,300])
-    draw_line([250,150],[250,500])
-    draw_line([250,0],[250,400])
-    """
-    draw_poly([100,400,400,200,300,100],[100,100,400,250,250,400])
+    bezier([50,450,50,450],[450,450,50,50])
     root.update()
