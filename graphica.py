@@ -230,8 +230,43 @@ def bezier(X,Y) :
     print(line_list)
     for line in line_list :
         draw_line( line[0],line[1] )
+
+def points_intersec(X0,Y0,X1,Y1) :
+    A = []; B =[]; C = []
+    A.append(Y0[0] - Y0[1]); A.append(Y1[0] - Y1[1])
+    B.append(X0[1] - X0[0]); B.append(X1[1] - X1[0])
+    C.append(X0[1]*Y0[0] - X0[0]*Y0[1])
+    C.append(X1[1]*Y1[0] - X1[0]*Y1[1])
+
+    D = A[0]*B[1] - A[1]*B[0]
+    if D == 0 :
+        return False
+    Dx = -(B[0]*C[1] - B[1]*C[0])
+    Dy = A[0]*C[1] - A[1]*C[0]
+
+    xi = Dx/D; yi = Dy/D
+    return [int(xi),int(yi)]
+
+def clipped_line(X,Y,poly,poly_draw=False) :
+    line_list = []
+    section = []
+    for i in range( len(poly[0]) ):
+        line_list.append( [ [ poly[0][i-1],poly[0][i] ], [ poly[1][i-1],poly[1][i] ] ] )
+    #for line in line_list:
+        #draw_line(line[0],line[1])
+    for line in line_list :
+        if intersection(X,Y,line[0],line[1]) == True :
+            section.append(points_intersec(X,Y,line[0],line[1]))
+    print(section)
+    section[0][1], section[1][0] = section[1][0], section[0][1]
+    draw_line(section[0],section[1])
+    if poly_draw :
+        for line in line_list:
+            draw_line(line[0],line[1])
+    
         
 while True :
     canvas.delete("all")
-    bezier([50,450,50,450],[450,450,50,50])
+    #bezier([50,450,50,450],[450,450,50,50])
+    clipped_line( [0,500],[250,250], [ [50,450,450,50],[50,50,450,450] ], True )
     root.update()
