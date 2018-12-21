@@ -1,4 +1,6 @@
 from tkinter import *
+from math import cos
+from math import sin
 size = 500
 root = Tk()
 canvas = Canvas(root, width=size, height=size)
@@ -263,10 +265,57 @@ def clipped_line(X,Y,poly,poly_draw=False) :
     if poly_draw :
         for line in line_list:
             draw_line(line[0],line[1])
+
+def line_rotation(X,Y,Z,axe,phi) :
+    if axe == 'x' :
+        for i in range(len(Y)) :
+            Y[i] = int( Y[i]*cos(phi) - Z[i]*sin(phi) )
+            Z[i] = int( Y[i]*sin(phi) + Z[i]*cos(phi) )
+    if axe == 'y' :
+        for i in range(len(X)) :
+            X[i] = int( X[i]*cos(phi) + Z[i]*sin(phi) )
+            Z[i] = int(-X[i]*sin(phi) + Z[i]*cos(phi) )
+    if axe == 'z' :
+        for i in range(len(X)) :
+            X[i] = int( X[i]*cos(phi) - Y[i]*sin(phi) )
+            Y[i] = int( X[i]*sin(phi) + Y[i]*cos(phi) )
+
+def cube_rotation(line_list,axe,phi) :
+    for line in line_list :
+        line_rotation(line[0],line[1],line[2],axe,phi)
+
+def draw_cube(X,Y,Z,axe='x',phi=0.1, persp = True) :
+    # X = [x1,...,x4], Y = [y1,...,y4], Z = [z1,z2] -- параллелипипед, плоскости которого параллельны Z
+    line_list = []
+    for i in range( len(X) ):
+        line_list.append( [ [ X[i-1],X[i] ], [ Y[i-1],Y[i] ], [ Z[0],Z[0] ] ] )
+        line_list.append( [ [ X[i],X[i] ], [ Y[i],Y[i] ], [ Z[0],Z[1] ] ] )
+        line_list.append( [ [ X[i-1],X[i] ], [ Y[i-1],Y[i] ], [ Z[1],Z[1] ] ] )
+    cube_rotation(line_list,axe,phi)
+    cube_rotation(line_list,'y',phi)
+    #cube_rotation(line_list,'z',phi)
+    if persp == True :
+        dot_perspective( line_list )
+    else :
+        parallel_projection(line_list)
+
+def parallel_projection(line_list) :
+    for line in line_list :
+        draw_line(line[0],line[1])
+
+def dot_perspective(line_list,dot = [1000,0,1000]) :
+    for line in line_list :
+        for j in range(len(line[0])) :
+            x = line[0][j]; y = line[1][j]; z = line[2][j]
+            x = int( dot[0] + dot[2]*(dot[0]-x)/(z-dot[2]) )
+            y = int( dot[1] + dot[2]*(dot[1]-y)/(z-dot[2]) )
+            line[0][j] = x; line[1][j] = y
+        draw_line( line[0],line[1] ) 
     
-        
+
 while True :
     canvas.delete("all")
     #bezier([50,450,50,450],[450,450,50,50])
-    clipped_line( [0,500],[250,250], [ [50,450,450,50],[50,50,450,450] ], True )
+    #clipped_line( [0,500],[250,250], [ [50,450,450,50],[50,50,450,450] ], True )
+    draw_cube([200,300,300,200],[200,200,300,300],[0,300])
     root.update()
