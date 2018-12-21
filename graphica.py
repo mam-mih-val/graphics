@@ -71,22 +71,28 @@ def draw_line(X,Y) :
                 error -= dy
         return None
 
-def draw_poly(X,Y, Fill=1) :
+def draw_poly(X,Y, Fill=0) :
+    #Fill = 0 -- no filling
+    #Fill = 1 -- even odd method
+    #Fill = 2 -- nonzero method
     if len(Y) != len(X) :
         return None
     line_list = []
     for i in range( len(X) ):
-        line_list.append([ [ X[i-1],X[i] ], [ Y[i-1],Y[i] ] ])
-    #line_list.append([ [X[0],X[-1]],[Y[0],Y[-1]] ])
+        line_list.append( [ [ X[i-1],X[i] ], [ Y[i-1],Y[i] ] ] )
     #poly_type(line_list)
-    #print(line_list)
-    for i in range( len(line_list) ):
-        draw_line(line_list[i][0],line_list[i][1])
-    if Fill == 1 :
+    print(None)
+    if Fill != 0 :
         for i in range(size) :
             for j in range(size) :
-                if(even_odd(i,j,line_list) == True) :
-                    canvas.create_rectangle(i,j,i,j,fill="black")
+                if Fill == 1 :
+                    if(even_odd(i,j,line_list) == True) :
+                        canvas.create_rectangle(i,j,i,j,fill="black")
+                if Fill == 2 :
+                    if(non_zero(i,j,line_list) == True) :
+                        canvas.create_rectangle(i,j,i,j,fill="black")
+    for i in range( len(line_list) ):
+        draw_line(line_list[i][0],line_list[i][1])
                 
 
 def intersection(X0,Y0,X1,Y1) :
@@ -135,6 +141,11 @@ def vect_product(X0,Y0,X1,Y1) :
     a1 = [ X1[1]-X1[0], Y1[1]-Y1[0] ]
     return a0[0]*a1[1] - a0[1]*a1[0]
 
+def scal_product(X0,Y0,X1,Y1) :
+    a0 = [ X0[1]-X0[0], Y0[1]-Y0[0] ]
+    a1 = [ X1[1]-X1[0], Y1[1]-Y1[0] ]
+    return a0[0]*a1[0] + a0[1]*a1[1]
+
 def poly_type(LL) :
     simp = []
     conv = []
@@ -172,11 +183,23 @@ def even_odd(x0,y0,LL) :
             continue
     return is_in
 
+def non_zero(x0,y0,LL) :
+    ray_x = [x0,size]
+    ray_y = [y0,y0]
+    is_in = 0
+    for i in range(len(LL)) :
+        if( intersection(LL[i][0],LL[i][1],ray_x,ray_y) == True ) :
+            rl = vect_product( LL[i][0],LL[i][1],ray_x,ray_y )
+            is_in+= rl/abs(rl)
+    if is_in != 0 :
+        return True
+    else :
+        return False
 
 while True :
     canvas.delete("all")
     """
-    draw_line([250,300],[250,0])
+    draw_line([100,400],[100,50])
     draw_line([250,500],[250,150])
     draw_line([250,150],[250,0])
     draw_line([250,0],[250,150])
