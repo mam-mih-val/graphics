@@ -256,6 +256,13 @@ def points_intersec(X0,Y0,X1,Y1) :
     xi = Dx/D; yi = Dy/D
     return [int(xi),int(yi)]
 
+def distance_to_poly(poly) :
+    #poly = [ [X, Y, Z],...,[X,Y,Z] ] 
+    Z = []
+    for line in poly :
+        Z.append( (line[2][0]+line[2][1])/2 )
+    return  abs(sum(Z)/len(Z))
+
 def clipped_line(X,Y,poly,poly_draw=False) :
     line_list = []
     section = []
@@ -301,31 +308,45 @@ def cube_rotation(line_list,axis,phi) :
     for line in line_list :
         line_rotation(M,line[0],line[1],line[2])
 
-def draw_cube(X,Y,Z,axis=[1,1,0], phi=0.1, persp = False, hide = False) :
+def get_visible_polies(poly_list) :
+    rho = []; visible = []
+    for i in range( len(poly_list) ) :
+        rho.append( distance_to_poly(poly_list[i]) )
+    print(rho) 
+    for i in range( 3 ) :
+        idx = rho.index( min(rho) )
+        print(idx)
+        visible.append( poly_list[idx] )
+        rho.pop(idx); poly_list.pop(idx)
+    return(visible)
+
+def draw_cube(X,Y,Z,axis=[1,1,0], phi=0.1, persp = False, hide = True) :
     # X = [x1,x2], Y = [y1,y2], Z = [z1,z2] -- параллелипипед, плоскости которого параллельны Z
     line_list = []
     for z in Z :
         for i in range(len(X)) :
-            for j in range(len(Y)) :
-                line_list.append( [ [X[i],X[i]], [Y[j-1],Y[j]], [z,z] ] )
+            line_list.append( [ [X[i],X[i]], [Y[-1],Y[0]], [z,z] ] )
         for i in range(len(Y)) :
-            for j in range(len(X)) :
-                line_list.append( [ [X[j-1],X[j]], [Y[i],Y[i]], [z,z] ] )
+            line_list.append( [ [X[-1],X[0]], [Y[i],Y[i]], [z,z] ] )
     for x in X :
         for i in range(len(Z)) :
-            for j in range(len(Y)) :
-                line_list.append( [ [x,x], [Y[j-1],Y[j]], [Z[i],Z[i]] ] )
+            line_list.append( [ [x,x], [Y[-1],Y[0]], [Z[i],Z[i]] ] )
         for i in range(len(Y)) :
-            for j in range(len(Z)) :
-                line_list.append( [ [x,x], [Y[i],Y[i]], [Z[j-1],Z[j]] ] )
+            line_list.append( [ [x,x], [Y[i],Y[i]], [Z[-1],Z[0]] ] )
     for y in Y :
         for i in range(len(X)) :
-            for j in range(len(Z)) :
-                line_list.append( [ [X[i],X[i]], [y,y], [Z[j-1],Z[j]] ] )
+            line_list.append( [ [X[i],X[i]], [y,y], [Z[-1],Z[0]] ] )
         for i in range(len(Z)) :
-            for j in range(len(X)) :
-                line_list.append( [ [X[j-1],X[j]], [y,y], [Z[i],Z[i]] ] )
+            line_list.append( [ [X[-1],X[0]], [y,y], [Z[i],Z[i]] ] )
     cube_rotation(line_list,axis,phi)
+    poly_list = [ line_list[i:i+4] for i in range(0,len(line_list),4) ]
+    #print(len(poly_list))
+    if hide == True :
+        visible_poly = get_visible_polies(poly_list)
+        line_list.clear()
+        #print(len(visible_poly))
+        for i in range(len(visible_poly)) :
+            line_list.extend(visible_poly[i])
     if persp == True :
         dot_perspective( line_list )
     else :
@@ -351,6 +372,6 @@ while True :
     canvas.delete("all")
     #bezier([50,450,50,450],[450,450,50,50])
     #clipped_line( [0,500],[250,250], [ [50,450,450,50],[50,50,450,450] ], True )
-    draw_cube([200,300],[200,300],[-100,100],[1,1,0],phi,False)
+    draw_cube([200,300],[200,300],[100,300],[1,1,0],phi,False)
     phi+=dphi
     root.update()
