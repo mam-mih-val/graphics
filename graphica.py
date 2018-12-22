@@ -273,12 +273,18 @@ def clipped_line(X,Y,poly,poly_draw=False) :
         for line in line_list:
             draw_line(line[0],line[1])
 
-def line_rotation(X,Y,Z,axis,phi) :
+def line_rotation(M, X,Y,Z) :
     for i in range(len(X)) :
-        dot_new = dot_rotation( [X[i],Y[i], Z[i]], axis, phi )
+        dot_new = dot_rotation(M, [X[i],Y[i], Z[i]])
         X[i] = dot_new[0]; Y[i] = dot_new[1]; Z[i] = dot_new[2]
 
-def dot_rotation(dot,axis,phi) :
+def dot_rotation(M, dot) :
+    dot_new = []
+    for i in range(3) :
+        dot_new.append( scal_product(M[i],dot) )
+    return dot_new
+
+def cube_rotation(line_list,axis,phi) :
     M = [] # матрица поворота
     c = cos(phi); s = sin(phi)
     l = sqrt(axis[0]**2+axis[1]**2+axis[2]**2)
@@ -290,24 +296,35 @@ def dot_rotation(dot,axis,phi) :
     M.append( [ c+(1-c)*x**2, (1-c)*x*y-s*z, (1-c)*x*z+s*y ] )
     M.append( [ (1-c)*y*x+s*z, c+(1-c)*y**2, (1-c)*y*z-s*x ] )
     M.append( [ (1-c)*z*x-s*y, (1-c)*z*y+s*x, c+(1-c)*z**2 ] )
-    print(M)
     dot_new = []
-    for i in range(3) :
-        print(M[i])
-        dot_new.append( scal_product(M[i],dot) )
-    return dot_new
 
-def cube_rotation(line_list,axis,phi) :
     for line in line_list :
-        line_rotation(line[0],line[1],line[2],axis,phi)
+        line_rotation(M,line[0],line[1],line[2])
 
-def draw_cube(X,Y,Z,axis=[1,1,0],phi=0.1, persp = False) :
-    # X = [x1,...,x4], Y = [y1,...,y4], Z = [z1,z2] -- параллелипипед, плоскости которого параллельны Z
+def draw_cube(X,Y,Z,axis=[1,1,0], phi=0.1, persp = False, hide = False) :
+    # X = [x1,x2], Y = [y1,y2], Z = [z1,z2] -- параллелипипед, плоскости которого параллельны Z
     line_list = []
-    for i in range( len(X) ):
-        line_list.append( [ [ X[i-1],X[i] ], [ Y[i-1],Y[i] ], [ Z[0],Z[0] ] ] )
-        line_list.append( [ [ X[i],X[i] ], [ Y[i],Y[i] ], [ Z[0],Z[1] ] ] )
-        line_list.append( [ [ X[i-1],X[i] ], [ Y[i-1],Y[i] ], [ Z[1],Z[1] ] ] )
+    for z in Z :
+        for i in range(len(X)) :
+            for j in range(len(Y)) :
+                line_list.append( [ [X[i],X[i]], [Y[j-1],Y[j]], [z,z] ] )
+        for i in range(len(Y)) :
+            for j in range(len(X)) :
+                line_list.append( [ [X[j-1],X[j]], [Y[i],Y[i]], [z,z] ] )
+    for x in X :
+        for i in range(len(Z)) :
+            for j in range(len(Y)) :
+                line_list.append( [ [x,x], [Y[j-1],Y[j]], [Z[i],Z[i]] ] )
+        for i in range(len(Y)) :
+            for j in range(len(Z)) :
+                line_list.append( [ [x,x], [Y[i],Y[i]], [Z[j-1],Z[j]] ] )
+    for y in Y :
+        for i in range(len(X)) :
+            for j in range(len(Z)) :
+                line_list.append( [ [X[i],X[i]], [y,y], [Z[j-1],Z[j]] ] )
+        for i in range(len(Z)) :
+            for j in range(len(X)) :
+                line_list.append( [ [X[j-1],X[j]], [y,y], [Z[i],Z[i]] ] )
     cube_rotation(line_list,axis,phi)
     if persp == True :
         dot_perspective( line_list )
@@ -318,7 +335,7 @@ def parallel_projection(line_list) :
     for line in line_list :
         draw_line(line[0],line[1])
 
-def dot_perspective(line_list,dot = [1000,0,1000]) :
+def dot_perspective(line_list,dot = [250,250,-500]) :
     for line in line_list :
         for j in range(len(line[0])) :
             x = line[0][j]; y = line[1][j]; z = line[2][j]
@@ -328,12 +345,12 @@ def dot_perspective(line_list,dot = [1000,0,1000]) :
         draw_line( line[0],line[1] ) 
     
 
-dphi = 0.01
+dphi = 0.1
 phi = 0
 while True :
     canvas.delete("all")
     #bezier([50,450,50,450],[450,450,50,50])
     #clipped_line( [0,500],[250,250], [ [50,450,450,50],[50,50,450,450] ], True )
-    draw_cube([200,300,300,200],[200,200,300,300],[0,300],[1,1,0],phi,True)
+    draw_cube([200,300],[200,300],[-100,100],[1,1,0],phi,False)
     phi+=dphi
     root.update()
