@@ -1,6 +1,7 @@
 from tkinter import *
 from math import cos
 from math import sin
+from math import sqrt
 size = 500
 root = Tk()
 canvas = Canvas(root, width=size, height=size)
@@ -142,10 +143,16 @@ def vect_product(X0,Y0,X1,Y1) :
     a1 = [ X1[1]-X1[0], Y1[1]-Y1[0] ]
     return a0[0]*a1[1] - a0[1]*a1[0]
 
-def scal_product(X0,Y0,X1,Y1) :
-    a0 = [ X0[1]-X0[0], Y0[1]-Y0[0] ]
-    a1 = [ X1[1]-X1[0], Y1[1]-Y1[0] ]
-    return a0[0]*a1[0] + a0[1]*a1[1]
+def scal_product(v1,v2, is_int = True) :
+    if len(v1) != len(v2) :
+        return None
+    result = 0
+    for i in range( len(v1) ) :
+        result+=v1[i]*v2[i]
+    if is_int == True :
+        return int(result)
+    else:
+        return result
 
 def poly_type(LL) :
     simp = []
@@ -266,34 +273,42 @@ def clipped_line(X,Y,poly,poly_draw=False) :
         for line in line_list:
             draw_line(line[0],line[1])
 
-def line_rotation(X,Y,Z,axe,phi) :
-    if axe == 'x' :
-        for i in range(len(Y)) :
-            Y[i] = int( Y[i]*cos(phi) - Z[i]*sin(phi) )
-            Z[i] = int( Y[i]*sin(phi) + Z[i]*cos(phi) )
-    if axe == 'y' :
-        for i in range(len(X)) :
-            X[i] = int( X[i]*cos(phi) + Z[i]*sin(phi) )
-            Z[i] = int(-X[i]*sin(phi) + Z[i]*cos(phi) )
-    if axe == 'z' :
-        for i in range(len(X)) :
-            X[i] = int( X[i]*cos(phi) - Y[i]*sin(phi) )
-            Y[i] = int( X[i]*sin(phi) + Y[i]*cos(phi) )
+def line_rotation(X,Y,Z,axis,phi) :
+    for i in range(len(X)) :
+        dot_new = dot_rotation( [X[i],Y[i], Z[i]], axis, phi )
+        X[i] = dot_new[0]; Y[i] = dot_new[1]; Z[i] = dot_new[2]
 
-def cube_rotation(line_list,axe,phi) :
+def dot_rotation(dot,axis,phi) :
+    M = [] # матрица поворота
+    c = cos(phi); s = sin(phi)
+    l = sqrt(axis[0]**2+axis[1]**2+axis[2]**2)
+    if l == 1 :
+        x = axis[0]; y = axis[1]; z = axis[2]
+    else :
+        x = axis[0]/l; y = axis[1]/l; z = axis[2]/l
+    # заполнение матрицы поворота относительно произвольной оси v = (x,y,z)
+    M.append( [ c+(1-c)*x**2, (1-c)*x*y-s*z, (1-c)*x*z+s*y ] )
+    M.append( [ (1-c)*y*x+s*z, c+(1-c)*y**2, (1-c)*y*z-s*x ] )
+    M.append( [ (1-c)*z*x-s*y, (1-c)*z*y+s*x, c+(1-c)*z**2 ] )
+    print(M)
+    dot_new = []
+    for i in range(3) :
+        print(M[i])
+        dot_new.append( scal_product(M[i],dot) )
+    return dot_new
+
+def cube_rotation(line_list,axis,phi) :
     for line in line_list :
-        line_rotation(line[0],line[1],line[2],axe,phi)
+        line_rotation(line[0],line[1],line[2],axis,phi)
 
-def draw_cube(X,Y,Z,axe='x',phi=0.1, persp = True) :
+def draw_cube(X,Y,Z,axis=[1,1,0],phi=0.1, persp = False) :
     # X = [x1,...,x4], Y = [y1,...,y4], Z = [z1,z2] -- параллелипипед, плоскости которого параллельны Z
     line_list = []
     for i in range( len(X) ):
         line_list.append( [ [ X[i-1],X[i] ], [ Y[i-1],Y[i] ], [ Z[0],Z[0] ] ] )
         line_list.append( [ [ X[i],X[i] ], [ Y[i],Y[i] ], [ Z[0],Z[1] ] ] )
         line_list.append( [ [ X[i-1],X[i] ], [ Y[i-1],Y[i] ], [ Z[1],Z[1] ] ] )
-    cube_rotation(line_list,axe,phi)
-    cube_rotation(line_list,'y',phi)
-    #cube_rotation(line_list,'z',phi)
+    cube_rotation(line_list,axis,phi)
     if persp == True :
         dot_perspective( line_list )
     else :
@@ -313,9 +328,12 @@ def dot_perspective(line_list,dot = [1000,0,1000]) :
         draw_line( line[0],line[1] ) 
     
 
+dphi = 0.01
+phi = 0
 while True :
     canvas.delete("all")
     #bezier([50,450,50,450],[450,450,50,50])
     #clipped_line( [0,500],[250,250], [ [50,450,450,50],[50,50,450,450] ], True )
-    draw_cube([200,300,300,200],[200,200,300,300],[0,300])
+    draw_cube([200,300,300,200],[200,200,300,300],[0,300],[1,1,0],phi,True)
+    phi+=dphi
     root.update()
